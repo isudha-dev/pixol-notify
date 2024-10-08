@@ -2,6 +2,8 @@ package com.isudha.notify.service;
 
 import com.isudha.notify.dto.SendEmailDto;
 import com.isudha.notify.exception.EmailDeliveryException;
+import com.isudha.notify.exception.InvalidTemplateException;
+import com.isudha.notify.exception.ResourceNotFoundException;
 import com.isudha.notify.model.Email;
 import com.isudha.notify.model.EmailStatus;
 import com.isudha.notify.model.Template;
@@ -24,20 +26,15 @@ public class EmailService {
     private TemplateService templateService;
     private EmailRepo emailRepo;
 
-//    public EmailService(SesClient sesClient, TemplateService templateService, EmailRepo emailRepo) {
-//        this.sesClient = sesClient;
-//        this.templateService = templateService;
-//        this.emailRepo = emailRepo;
-
-//    }
-
     public Email sendEmail(SendEmailDto sendEmailDto) {
-        // create pending email
+
         UUID templateId = UUID.fromString(sendEmailDto.getTemplateId());
         Template template = templateService.get(templateId);
         if(template.getStatus() != TemplateStatus.ACTIVE) {
-            throw new RuntimeException("Template is not active.");
+            throw new InvalidTemplateException("Template is not active.");
         }
+
+        Message message = buildMessage(template, sendEmailDto.getData());
 
         Email email = sendEmailDto.toEmail();
         email = emailRepo.save(email);
@@ -50,12 +47,10 @@ public class EmailService {
             SendEmailRequest emailRequest = SendEmailRequest.builder()
                     .source(sendEmailDto.getFrom())
                     .destination(Destination.builder().toAddresses(toAddresses).ccAddresses(ccAddresses).build())
-                    .message(buildMessage(templateId, sendEmailDto.getData()))
+                    .message(message)
                     .build();
 
             SendEmailResponse emailResponse = sesClient.sendEmail(emailRequest);
-            System.out.println("Message id: " + emailResponse.messageId());
-            System.out.println("Sdk fields: " + emailResponse.sdkFields());
 
         } catch (SesException ex) {
             email.setStatus(EmailStatus.FAILED);
@@ -68,15 +63,23 @@ public class EmailService {
         return emailRepo.save(email);
     }
 
-    private Message buildMessage(UUID templateId, Map<String, String> data) {
-        Template template = templateService.get(templateId);
+    public EmailStatus getEmailStatus(UUID emailId) {
+        Email email = getEmail(emailId);
+        return email.getStatus();
+    }
 
+    public Email getEmail(UUID emailId) {
+        return emailRepo.findById(emailId).orElseThrow(() -> new ResourceNotFoundException("Email does not exists with UUID: " +emailId));
+    }
+
+    private Message buildMessage(Template template, Map<String, String> data) {
         Content contentSub = Content.builder()
                 .data(templateService.updatePlaceholdersWithValue(data, template.getSubject())).build();
 
         Content contentBody = Content.builder()
                 .data(templateService.updatePlaceholdersWithValue(data, template.getBody())).build();
 
-        return Message.builder().subject(contentSub).body(Body.builder().text(contentBody).build()).build();
+        return Message.builder().subject(contentSub).body(Body.builder().html(contentBody).build()).build();
     }
+
 }

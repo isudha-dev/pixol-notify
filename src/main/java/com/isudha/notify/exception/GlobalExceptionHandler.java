@@ -29,6 +29,11 @@ public class GlobalExceptionHandler {
         return createResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(InvalidTemplateException.class)
+    public ResponseEntity<GenericFailureResponseDto> handleInvalidTemplateException(InvalidTemplateException ex) {
+        return createResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
     private ResponseEntity<GenericFailureResponseDto> createResponse(String message, HttpStatus status) {
         return new ResponseEntity<>(new GenericFailureResponseDto(false, message), status);
     }

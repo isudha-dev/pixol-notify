@@ -65,7 +65,7 @@ public class TemplateService {
     }
 
     public String updatePlaceholdersWithValue(Map<String,String> emailData, String templateString) {
-        Pattern pattern = Pattern.compile("\\{(\\w+)\\}"); // "\\{(\\w+)\\}"
+        Pattern pattern = Pattern.compile("\\{(\\w+)\\}");
         Matcher matcher = pattern.matcher(templateString);
 
         while (matcher.find()) {
