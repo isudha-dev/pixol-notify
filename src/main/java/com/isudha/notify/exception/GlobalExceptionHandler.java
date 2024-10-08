@@ -34,6 +34,11 @@ public class GlobalExceptionHandler {
         return createResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<GenericFailureResponseDto> handleException(Exception ex) {
+        return createResponse(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     private ResponseEntity<GenericFailureResponseDto> createResponse(String message, HttpStatus status) {
         return new ResponseEntity<>(new GenericFailureResponseDto(false, message), status);
     }

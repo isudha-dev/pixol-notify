@@ -36,7 +36,7 @@ public class EmailController {
     }
 
     // get email
-    @GetMapping("/{id")
+    @GetMapping("/{id}")
     public ResponseEntity<GenericSuccessResponseDto<Email>> get(@PathVariable("id") UUID id) {
         Email email = emailService.getEmail(id);
         return new ResponseEntity<>(new GenericSuccessResponseDto<>(true, email), HttpStatus.FOUND);

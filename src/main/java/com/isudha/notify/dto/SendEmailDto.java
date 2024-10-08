@@ -8,6 +8,8 @@ import com.isudha.notify.model.EmailStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,9 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 public class SendEmailDto {
+
+    private Logger logger = LoggerFactory.getLogger(SendEmailDto.class);
+
     private List<String> to;
     private List<String> cc;
     private String from;
@@ -29,8 +34,12 @@ public class SendEmailDto {
 
         try {
             templateData = mapper.writeValueAsString(data);
-        } catch (JsonProcessingException e) {
+        } catch (JsonProcessingException ex) {
+            logger.error("JSON processing error while parsing template data. Error: ", ex.getMessage());
             throw new TemplateDataParsingException("Unable to parse template data");
+        } catch (Exception ex) {
+            logger.error("An unexpected error occurred while parsing template data. Error: "+ ex.getMessage());
+            throw ex;
         }
 
         return Email.builder()
